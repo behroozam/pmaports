@@ -1,0 +1,68 @@
+# Reference: <https://postmarketos.org/vendorkernel>
+# Kernel config based on: arch/arm64/configs/exynos9610-a50_default_defconfig
+
+pkgname=linux-samsung-a50
+pkgver=4.14.180
+pkgrel=0
+pkgdesc="Samsung A50 kernel fork"
+arch="aarch64"
+_carch="arm64"
+_flavor="samsung-a50"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip !check !tracedeps pmb:cross-native"
+CC="clang"
+HOSTCC="clang"
+makedepends="
+	linux-headers
+	git
+	cmake 
+	make 
+	build-base 
+	llvm-static 
+	llvm-dev
+	llvm
+	clang-static 
+	clang-dev
+	clang
+	bash
+	bc
+	bison
+	devicepkg-dev
+	flex
+	openssl-dev
+	perl
+"
+
+# Source
+_repository="android_kernel_samsung_exynos9610_mint"
+_commit="499021e8cb147c4eedc245b65c78571aae31d788"
+_config="config-$_flavor.$arch"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/TenSeventy7/$_repository/archive/$_commit.tar.gz
+	$_config
+"
+builddir="$srcdir/$_repository-$_commit"
+_outdir="out"
+
+prepare() { 
+	default_prepare
+	REPLACE_GCCH=0
+	. downstreamkernel_prepare 
+}
+
+build() {
+	unset LDFLAGS
+	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" LLVM=1 \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+}
+
+package() {
+	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
+		"$_flavor" "$_outdir"
+}
+
+sha512sums="
+63e34b1cb9210bfd2c418c0d9402405705bd22787f561f296a0c1a3de087b16f9b44a01d5dc6adf513388fa82315206aa0b04e7906f8e73d3c8e532c6ccc6b76  linux-samsung-a50-499021e8cb147c4eedc245b65c78571aae31d788.tar.gz
+6779f61b29325fe8ed59c36a81213930b594faf6c7ffc11a31a9a80c9f1010bf33d05a9aab2934afe8c4a755fce43db782f57ca07b34b9babff43ab238ce2b11  config-samsung-a50.aarch64
+"
